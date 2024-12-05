@@ -1,12 +1,13 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using System.Collections.Generic;
 using System.Linq;
 using static ChatBehaviour;
 
 namespace DyeCommands;
 
-[BepInPlugin("com.16mb.dyecommands", "DyeCommands", "0.0.1")]
+[BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public partial class Plugin : BaseUnityPlugin
 {
     internal static new ManualLogSource Logger;
@@ -50,7 +51,7 @@ public partial class Plugin : BaseUnityPlugin
             );
         }
 
-        new Harmony("DyeCommands").PatchAll();
+        new Harmony(MyPluginInfo.PLUGIN_NAME).PatchAll();
         Logger.LogInfo("Plugin DyeCommands is loaded!");
     }
 
@@ -60,6 +61,7 @@ public partial class Plugin : BaseUnityPlugin
 
     //}
 
+    //TODO: Find a better method to patch into as this is called every frame.
     [HarmonyPatch(typeof(RaceModelEquipDisplay), "Apply_ArmorDisplay")]
     public static class Apply_ArmorDisplayPatch
     {
@@ -89,9 +91,8 @@ public partial class Plugin : BaseUnityPlugin
         }
     }
 
-
     [HarmonyPatch(typeof(ChatBehaviour), "Cmd_SendChatMessage")]
-    public static class AddCommandssPatch
+    public static class AddCommandsPatch
     {
         [HarmonyPrefix]
         public static bool Cmd_SendChatMessage_Prefix(ChatBehaviour __instance, string _message, ChatChannel _chatChannel)
@@ -103,36 +104,32 @@ public partial class Plugin : BaseUnityPlugin
                 PlayerVisual component = __instance.GetComponent<PlayerVisual>();
                 PlayerAppearanceStruct playerAppearanceStruct = component._playerAppearanceStruct;
 
-                if (new[] { "help", "h" }.Contains(messageParts.ElementAtOrDefault(1)))
+                ScriptableArmorDye[] scriptableArmorDyes = GameManager._current._statLogics._armorDyes;
+                List<string> scriptableArmorDyeNames = scriptableArmorDyes.Select(x => x._itemName.Split(' ').FirstOrDefault()).ToList();
+
+                if (messageParts.ElementAtOrDefault(1) == "help")
                 {
                     __instance.New_ChatMessage($"<color={chatColourHex}>[DC] Type \"/dye <Armour> <Dye>\"</color>");
                     __instance.New_ChatMessage($"<color={chatColourHex}>[DC] Armour: Helm, Chest, Legs, Cape, All</color>");
                     __instance.New_ChatMessage($"<color={chatColourHex}>[DC] Dye: Grey, Blue, Green, Red, None</color>");
+                    var extraDyes = scriptableArmorDyeNames.Except(["Grey", "Blue", "Green", "Red"]);
+                    if (extraDyes.Any()) __instance.New_ChatMessage($"<color={chatColourHex}>[DC] ... {extraDyes.Aggregate((x, y) => $"{x}, {y}")}</color>");
                     __instance.New_ChatMessage($"<color={chatColourHex}>[DC] This is not case sensitive.</color>");
                     return false;
                 }
 
-                var dyeIndex = -1;
-                switch (messageParts.ElementAtOrDefault(2))
+                int dyeIndex = -1;
+                bool validDye = true;
+                for (var i = 0; i < scriptableArmorDyeNames.Count(); i++)
                 {
-                    case "grey" or "white" or "w" or "0":
-                        dyeIndex = 0;
+                    if (messageParts.ElementAtOrDefault(2) == scriptableArmorDyeNames[i].ToLower() || messageParts.ElementAtOrDefault(2) == i.ToString())
+                    {
+                        dyeIndex = i;
                         break;
-                    case "blue" or "b" or "1":
-                        dyeIndex = 1;
-                        break;
-                    case "green" or "g" or "2":
-                        dyeIndex = 2;
-                        break;
-                    case "red" or "r" or "3":
-                        dyeIndex = 3;
-                        break;
-                    case "none" or "n" or "4":
-                        dyeIndex = 4;
-                        break;
-                    default:
-                        break;
+                    }
                 }
+                if (dyeIndex == -1 && messageParts.ElementAtOrDefault(2) != "none") validDye = false;
+                
                 int armourIndex = -1;
                 switch (messageParts.ElementAtOrDefault(1))
                 {
@@ -151,74 +148,42 @@ public partial class Plugin : BaseUnityPlugin
                     case "All" or "a" or "4":
                         armourIndex = 4;
                         break;
-                    default:
-                        break;
                 }
-                if (dyeIndex >= 0 && armourIndex >= 0)
+                if (validDye && armourIndex >= 0)
                 {
-                    if (dyeIndex == 4)
+                    switch (armourIndex)
                     {
-                        switch (armourIndex)
-                        {
-                            case 0:
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = false;
-                                break;
-                            case 1:
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = false;
-                                break;
-                            case 2:
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = false;
-                                break;
-                            case 3:
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = false;
-                                break;
-                            case 4:
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = false;
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = false;
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = false;
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = false;
-                                break;
-                            default:
-                                break;
-                        }
-                        __instance.New_ChatMessage($"<color={chatColourHex}>[DC] Cleared {(AmourPart)armourIndex} Dye.</color>");
+                        case 0:
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = dyeIndex != -1;
+                            playerAppearanceStruct._helmDyeIndex = dyeIndex != 4 ? dyeIndex : playerAppearanceStruct._helmDyeIndex;
+                            break;
+                        case 1:
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = dyeIndex != -1;
+                            playerAppearanceStruct._chestDyeIndex = dyeIndex != 4 ? dyeIndex : playerAppearanceStruct._chestDyeIndex;
+                            break;
+                        case 2:
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = dyeIndex != -1;
+                            playerAppearanceStruct._legsDyeIndex = dyeIndex != 4 ? dyeIndex : playerAppearanceStruct._legsDyeIndex;
+                            break;
+                        case 3:
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = dyeIndex != -1;
+                            playerAppearanceStruct._capeDyeIndex = dyeIndex != 4 ? dyeIndex : playerAppearanceStruct._capeDyeIndex;
+                            break;
+                        case 4:
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = dyeIndex != -1;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = dyeIndex != -1;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = dyeIndex != -1;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = dyeIndex != -1;
+
+                            playerAppearanceStruct._helmDyeIndex = dyeIndex != -1 ? dyeIndex : playerAppearanceStruct._helmDyeIndex;
+                            playerAppearanceStruct._chestDyeIndex = dyeIndex != -1 ? dyeIndex : playerAppearanceStruct._chestDyeIndex;
+                            playerAppearanceStruct._legsDyeIndex = dyeIndex != -1 ? dyeIndex : playerAppearanceStruct._legsDyeIndex;
+                            playerAppearanceStruct._capeDyeIndex = dyeIndex != -1 ? dyeIndex : playerAppearanceStruct._capeDyeIndex;
+                            break;
                     }
-                    else
-                    {
-                        switch (armourIndex)
-                        {
-                            case 0:
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = true;
-                                playerAppearanceStruct._helmDyeIndex = dyeIndex;
-                                break;
-                            case 1:
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = true;
-                                playerAppearanceStruct._chestDyeIndex = dyeIndex;
-                                break;
-                            case 2:
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = true;
-                                playerAppearanceStruct._legsDyeIndex = dyeIndex;
-                                break;
-                            case 3:
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = true;
-                                playerAppearanceStruct._capeDyeIndex = dyeIndex;
-                                break;
-                            case 4:
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = true;
-                                playerAppearanceStruct._helmDyeIndex = dyeIndex;
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = true;
-                                playerAppearanceStruct._chestDyeIndex = dyeIndex;
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = true;
-                                playerAppearanceStruct._legsDyeIndex = dyeIndex;
-                                profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = true;
-                                playerAppearanceStruct._capeDyeIndex = dyeIndex;
-                                break;
-                            default:
-                                break;
-                        }
-                        component.Network_playerAppearanceStruct = playerAppearanceStruct;
-                        __instance.New_ChatMessage($"<color={chatColourHex}>[DC] Dyed {(AmourPart)armourIndex} {(DyeColour)dyeIndex}.</color>");
-                    }
+                    component.Network_playerAppearanceStruct = playerAppearanceStruct;
+                    if (dyeIndex == -1) __instance.New_ChatMessage($"<color={chatColourHex}>[DC] Cleared {(AmourPart)armourIndex} Dye.</color>");
+                    else __instance.New_ChatMessage($"<color={chatColourHex}>[DC] Dyed {(AmourPart)armourIndex} {scriptableArmorDyeNames[dyeIndex]}.</color>");
                 }
                 else
                 {
@@ -226,7 +191,7 @@ public partial class Plugin : BaseUnityPlugin
                     {
                         __instance.New_ChatMessage($"<color={chatColourHex}>[DC] \"{messageParts.ElementAtOrDefault(1)}\" is not a valid amour piece.</color>");
                     }
-                    if (dyeIndex < 0 && messageParts.Count() > 2)
+                    if (!validDye && messageParts.Count() > 2)
                     {
                         __instance.New_ChatMessage($"<color={chatColourHex}>[DC] \"{messageParts.ElementAtOrDefault(2)}\" is not a valid dye colour.</color>");
                     }

@@ -1,9 +1,9 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net46</TargetFramework>
-    <AssemblyName>DyeCommands</AssemblyName>
-    <Product>DyeCommands</Product>
+    <AssemblyName>MoreBankTabs</AssemblyName>
+    <Product>MoreBankTabs</Product>
     <Version>0.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
@@ -12,7 +12,7 @@
       https://nuget.bepinex.dev/v3/index.json;
       https://nuget.samboy.dev/v3/index.json
     </RestoreAdditionalProjectSources>
-    <RootNamespace>DyeCommands</RootNamespace>
+    <RootNamespace>MoreBankTabs</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +23,7 @@
   </ItemGroup>
   
   <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
-    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>
@@ -48,10 +48,13 @@
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>D:\Games\Steam Games\steamapps\common\ATLYSS - Debug\ATLYSS_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>D:\Games\Steam Games\steamapps\common\ATLYSS - Debug\ATLYSS_Data\Managed\UnityEngine.UI.dll</HintPath>
+    </Reference>
   </ItemGroup>
   
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="xcopy /q/y/i &quot;C:\Users\jambr\source\repos\AtlyssMods\DyeCommands\bin\Debug\net46\DyeCommands.dll&quot; &quot;D:\Games\Steam Games\steamapps\common\ATLYSS - Debug\BepInEx\plugins&quot; /E /H /C" />
-    <Exec Command="xcopy /q/y/i &quot;C:\Users\jambr\source\repos\AtlyssMods\DyeCommands\bin\Debug\net46\DyeCommands.pdb&quot; &quot;D:\Games\Steam Games\steamapps\common\ATLYSS - Debug\BepInEx\plugins&quot; /E /H /C" />
+    <Exec Command="xcopy /q/y/i &quot;C:\Users\jambr\source\repos\AtlyssMods\MoreBankTabs\bin\Debug\net46\MoreBankTabs.dll&quot; &quot;D:\Games\Steam Games\steamapps\common\ATLYSS - Debug\BepInEx\plugins&quot; /E /H /C" />
+    <Exec Command="xcopy /q/y/i &quot;C:\Users\jambr\source\repos\AtlyssMods\MoreBankTabs\bin\Debug\net46\MoreBankTabs.pdb&quot; &quot;D:\Games\Steam Games\steamapps\common\ATLYSS - Debug\BepInEx\plugins&quot; /E /H /C" />
   </Target>
 </Project>
