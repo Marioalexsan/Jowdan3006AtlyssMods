@@ -151,38 +151,39 @@ public partial class Plugin : BaseUnityPlugin
                 }
                 if (validDye && armourIndex >= 0)
                 {
+                    bool dyeEnabled = dyeIndex != -1;
                     switch (armourIndex)
                     {
                         case 0:
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = dyeIndex != -1;
-                            playerAppearanceStruct._helmDyeIndex = dyeIndex != 4 ? dyeIndex : playerAppearanceStruct._helmDyeIndex;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = dyeEnabled;
+                            playerAppearanceStruct._helmDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._helmDyeIndex;
                             break;
                         case 1:
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = dyeIndex != -1;
-                            playerAppearanceStruct._chestDyeIndex = dyeIndex != 4 ? dyeIndex : playerAppearanceStruct._chestDyeIndex;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = dyeEnabled;
+                            playerAppearanceStruct._chestDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._chestDyeIndex;
                             break;
                         case 2:
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = dyeIndex != -1;
-                            playerAppearanceStruct._legsDyeIndex = dyeIndex != 4 ? dyeIndex : playerAppearanceStruct._legsDyeIndex;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = dyeEnabled;
+                            playerAppearanceStruct._legsDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._legsDyeIndex;
                             break;
                         case 3:
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = dyeIndex != -1;
-                            playerAppearanceStruct._capeDyeIndex = dyeIndex != 4 ? dyeIndex : playerAppearanceStruct._capeDyeIndex;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = dyeEnabled;
+                            playerAppearanceStruct._capeDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._capeDyeIndex;
                             break;
                         case 4:
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = dyeIndex != -1;
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = dyeIndex != -1;
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = dyeIndex != -1;
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = dyeIndex != -1;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = dyeEnabled;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = dyeEnabled;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = dyeEnabled;
+                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = dyeEnabled;
 
-                            playerAppearanceStruct._helmDyeIndex = dyeIndex != -1 ? dyeIndex : playerAppearanceStruct._helmDyeIndex;
-                            playerAppearanceStruct._chestDyeIndex = dyeIndex != -1 ? dyeIndex : playerAppearanceStruct._chestDyeIndex;
-                            playerAppearanceStruct._legsDyeIndex = dyeIndex != -1 ? dyeIndex : playerAppearanceStruct._legsDyeIndex;
-                            playerAppearanceStruct._capeDyeIndex = dyeIndex != -1 ? dyeIndex : playerAppearanceStruct._capeDyeIndex;
+                            playerAppearanceStruct._helmDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._helmDyeIndex;
+                            playerAppearanceStruct._chestDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._chestDyeIndex;
+                            playerAppearanceStruct._legsDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._legsDyeIndex;
+                            playerAppearanceStruct._capeDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._capeDyeIndex;
                             break;
                     }
                     component.Network_playerAppearanceStruct = playerAppearanceStruct;
-                    if (dyeIndex == -1) __instance.New_ChatMessage($"<color={chatColourHex}>[DC] Cleared {(AmourPart)armourIndex} Dye.</color>");
+                    if (!dyeEnabled) __instance.New_ChatMessage($"<color={chatColourHex}>[DC] Cleared {(AmourPart)armourIndex} Dye.</color>");
                     else __instance.New_ChatMessage($"<color={chatColourHex}>[DC] Dyed {(AmourPart)armourIndex} {scriptableArmorDyeNames[dyeIndex]}.</color>");
                 }
                 else
