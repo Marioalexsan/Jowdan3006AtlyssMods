@@ -1,5 +1,5 @@
 # AtlyssMods
- My personal mods for [Atlyss](https://store.steampowered.com/app/2768430/ATLYSS/), can be found on [Thunderstore](https://thunderstore.io/c/atlyss/).\
+ My personal mods for [Atlyss](https://store.steampowered.com/app/2768430/ATLYSS/), can be found on [Thunderstore](https://thunderstore.io/c/atlyss/p/16MB/).\
  I'm a complete novice when it comes to modding and game development so don't expect these to work without issue.
 ## DyeCommands
 A crude implementation to dye armour pieces in game by using commands in chat. All dye colours work and you can even remove dye from armour altogether. Not all armours look great with no dye applied as their orignal texture is an odd green colour. The colour of dyes is also not consistent across armour pieces. This is likely due to the orignal system dyeing all pieces at once and so to not always look like a crayon, the dev added variance to each armour piece for each dye.
