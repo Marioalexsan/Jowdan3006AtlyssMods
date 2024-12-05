@@ -18,9 +18,18 @@ Type "/Dye &lt;Armour> &lt;Dye>"
   &bullet; Cape,  K, 3
   &bullet; All,   A, 4
 &bullet; Dye: 
-  &bullet; Grey,  W, 0
-  &bullet; Blue,  B, 1
-  &bullet; Green, G, 2
-  &bullet; Red,   R, 3
-  &bullet; None,  N, 4
+  &bullet; Grey,  0
+  &bullet; Blue,  1
+  &bullet; Green, 2
+  &bullet; Red,   3
+  &bullet; None, 
 </pre>
+
+## MoreBankTabs
+Adds 3 new bank tabs to spike. These work in the exact same way as the original 3 tabs.
+
+This mod creates 3 new bank files in the same way as the base game does. The specific implementation seems quite fragile and I wouldn't be surprised if the developer makes large changes to the storage systems that break the mod. So back up your files. Although it shouldn't affect the original bank tabs, it's better safe than sorry.
+
+### Known\Possible Issues
+- Have seen some ui flickering and mouse hover conditions not working as intended, functionality should be unaffected.
+- This is not tested in multiplayer and I'd assume it doesn't work. I also likely don't have the knowledge to fix it if it doesn't.
