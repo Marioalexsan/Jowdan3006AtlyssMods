@@ -329,7 +329,7 @@ namespace MoreBankTabs
             [HarmonyPrefix]
             private static bool Init_PutItemIntoStoragePostfix(ItemListDataEntry __instance, int _setItemSlot)
             {
-                if (ItemStorageManager._current._selectedStorageTab >= 2)
+                if (ItemStorageManager._current._selectedStorageTab > 2)
                 {
                     if (__instance._entryType != 0)
                     {
