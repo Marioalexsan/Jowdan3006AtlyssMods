@@ -10,49 +10,56 @@ namespace DyeCommands;
 [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
 public partial class Plugin : BaseUnityPlugin
 {
+    internal static Plugin Instance;
+
     internal static new ManualLogSource Logger;
 
-    private static ProfileDyeConfig[] profileDyeConfigs;
+    private static Dictionary<int, ProfileDyeConfig> profileDyeConfigs = [];
     private static string chatColourHex = "#f5ce42";
 
     private void Awake()
     {
         // Plugin startup logic
+        Instance = this;
         Logger = base.Logger;
-
-        profileDyeConfigs = new ProfileDyeConfig[7];
-
-        for (int i = 0; i < profileDyeConfigs.Count(); i++)
-        {
-            profileDyeConfigs[i] = new ProfileDyeConfig();
-            profileDyeConfigs[i].HelmDyeEnabled = Config.Bind(
-                $"CharacterProfile{i}",
-                "HelmDyeEnabled",
-                true,
-                "Whether Dyes are Enabled for this profiles Helm."
-            );
-            profileDyeConfigs[i].ChestpieceDyeEnabled = Config.Bind(
-                $"CharacterProfile{i}",
-                "ChestpieceDyeEnabled",
-                true,
-                "Whether Dyes are Enabled for this profiles Chestpiece."
-            );
-            profileDyeConfigs[i].LeggingsDyeEnabled = Config.Bind(
-                $"CharacterProfile{i}",
-                "LeggingsDyeEnabled",
-                true,
-                "Whether Dyes are Enabled for this profiles Leggings."
-            );
-            profileDyeConfigs[i].CapeDyeEnabled = Config.Bind(
-                $"CharacterProfile{i}",
-                "CapeDyeEnabled",
-                true,
-                "Whether Dyes are Enabled for this profiles Cape."
-            );
-        }
 
         new Harmony(MyPluginInfo.PLUGIN_NAME).PatchAll();
         Logger.LogInfo("Plugin DyeCommands is loaded!");
+    }
+
+    private static ProfileDyeConfig GetProfile(int index)
+    {
+        if (profileDyeConfigs.TryGetValue(index, out var existingProfile))
+            return existingProfile;
+
+        var config = profileDyeConfigs[index] = new ProfileDyeConfig();
+
+        config.HelmDyeEnabled = Instance.Config.Bind(
+            $"CharacterProfile{index}",
+            "HelmDyeEnabled",
+            true,
+            "Whether Dyes are Enabled for this profiles Helm."
+        );
+        config.ChestpieceDyeEnabled = Instance.Config.Bind(
+            $"CharacterProfile{index}",
+            "ChestpieceDyeEnabled",
+            true,
+            "Whether Dyes are Enabled for this profiles Chestpiece."
+        );
+        config.LeggingsDyeEnabled = Instance.Config.Bind(
+            $"CharacterProfile{index}",
+            "LeggingsDyeEnabled",
+            true,
+            "Whether Dyes are Enabled for this profiles Leggings."
+        );
+        config.CapeDyeEnabled = Instance.Config.Bind(
+            $"CharacterProfile{index}",
+            "CapeDyeEnabled",
+            true,
+            "Whether Dyes are Enabled for this profiles Cape."
+        );
+
+        return config;
     }
 
     //[HarmonyPatch(typeof(ChatBehaviour), "Send_ChatMessage")]
@@ -68,19 +75,21 @@ public partial class Plugin : BaseUnityPlugin
         [HarmonyPrefix]
         public static void Apply_ArmorDisplay_Prefix(ScriptableArmor _scriptArmor)
         {
-            if (_scriptArmor.GetType() == typeof(ScriptableHelm) && !profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value)
+            var profile = GetProfile(ProfileDataManager._current.SelectedFileIndex);
+
+            if (_scriptArmor.GetType() == typeof(ScriptableHelm) && !profile.HelmDyeEnabled.Value)
             {
                 _scriptArmor._canDyeArmor = false;
             }
-            else if (_scriptArmor.GetType() == typeof(ScriptableChestpiece) && !profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value)
+            else if (_scriptArmor.GetType() == typeof(ScriptableChestpiece) && !profile.ChestpieceDyeEnabled.Value)
             {
                 _scriptArmor._canDyeArmor = false;
             }
-            else if (_scriptArmor.GetType() == typeof(ScriptableLeggings) && !profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value)
+            else if (_scriptArmor.GetType() == typeof(ScriptableLeggings) && !profile.LeggingsDyeEnabled.Value)
             {
                 _scriptArmor._canDyeArmor = false;
             }
-            else if (_scriptArmor.GetType() == typeof(ScriptableCape) && !profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value)
+            else if (_scriptArmor.GetType() == typeof(ScriptableCape) && !profile.CapeDyeEnabled.Value)
             {
                 _scriptArmor._canDyeArmor = false;
             }
@@ -145,36 +154,38 @@ public partial class Plugin : BaseUnityPlugin
                     case "cape" or "k" or "3":
                         armourIndex = 3;
                         break;
-                    case "All" or "a" or "4":
+                    case "all" or "a" or "4":
                         armourIndex = 4;
                         break;
                 }
                 if (validDye && armourIndex >= 0)
                 {
+                    var profile = GetProfile(ProfileDataManager._current.SelectedFileIndex);
+
                     bool dyeEnabled = dyeIndex != -1;
                     switch (armourIndex)
                     {
                         case 0:
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = dyeEnabled;
+                            profile.HelmDyeEnabled.Value = dyeEnabled;
                             playerAppearanceStruct._helmDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._helmDyeIndex;
                             break;
                         case 1:
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = dyeEnabled;
+                            profile.ChestpieceDyeEnabled.Value = dyeEnabled;
                             playerAppearanceStruct._chestDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._chestDyeIndex;
                             break;
                         case 2:
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = dyeEnabled;
+                            profile.LeggingsDyeEnabled.Value = dyeEnabled;
                             playerAppearanceStruct._legsDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._legsDyeIndex;
                             break;
                         case 3:
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = dyeEnabled;
+                            profile.CapeDyeEnabled.Value = dyeEnabled;
                             playerAppearanceStruct._capeDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._capeDyeIndex;
                             break;
                         case 4:
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].HelmDyeEnabled.Value = dyeEnabled;
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].ChestpieceDyeEnabled.Value = dyeEnabled;
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].LeggingsDyeEnabled.Value = dyeEnabled;
-                            profileDyeConfigs[ProfileDataManager._current.SelectedFileIndex].CapeDyeEnabled.Value = dyeEnabled;
+                            profile.HelmDyeEnabled.Value = dyeEnabled;
+                            profile.ChestpieceDyeEnabled.Value = dyeEnabled;
+                            profile.LeggingsDyeEnabled.Value = dyeEnabled;
+                            profile.CapeDyeEnabled.Value = dyeEnabled;
 
                             playerAppearanceStruct._helmDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._helmDyeIndex;
                             playerAppearanceStruct._chestDyeIndex = dyeEnabled ? dyeIndex : playerAppearanceStruct._chestDyeIndex;
